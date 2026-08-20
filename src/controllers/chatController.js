@@ -7,7 +7,7 @@
  */
 
 const chatService = require("../services/chatService");
-const { success } = require("../utils/formatResponse");
+const { success }  = require("../utils/formatResponse");
 
 /** GET /api/chat — retrieve the authenticated user's full chat history */
 const getHistory = async (req, res, next) => {
@@ -19,11 +19,15 @@ const getHistory = async (req, res, next) => {
   }
 };
 
-/** POST /api/chat — add a new message to the authenticated user's history */
-const addMessage = async (req, res, next) => {
+/**
+ * POST /api/chat/ask
+ * Body: { question: string }
+ * Calls the RAG API, saves the Q&A pair, and returns the saved message.
+ */
+const askQuestion = async (req, res, next) => {
   try {
-    const message = await chatService.addMessage(req.user.id, req.body);
-    res.status(201).json(success(message, "Message added."));
+    const message = await chatService.askQuestion(req.user.id, req.body.question, req.body.language);
+    res.status(201).json(success(message, "Question answered."));
   } catch (err) {
     next(err);
   }
@@ -49,4 +53,4 @@ const clearHistory = async (req, res, next) => {
   }
 };
 
-module.exports = { getHistory, addMessage, deleteMessage, clearHistory };
+module.exports = { getHistory, askQuestion, deleteMessage, clearHistory };

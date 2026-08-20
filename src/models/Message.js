@@ -1,16 +1,30 @@
 /**
  * Message.js
- * A single message inside a user's chat history.
+ * Represents a single Q&A exchange stored in the chat history.
  *
- * Each message belongs to one user (userId) and contains three string fields:
- *  - content        : the message text
- *  - status         : e.g. "pending", "answered", "error" — free-form string
- *  - evidenceQuality: e.g. "high", "medium", "low"   — free-form string
- *
- * All three fields are required. Messages are soft-ordered by createdAt.
+ * Each record captures:
+ *  - userId      : owner of the message
+ *  - question    : the user's original question
+ *  - answer      : the RAG recommendation (required)
+ *  - evidence    : supporting evidence text from the RAG response
+ *  - citations   : array of source references [{document, section, page}]
+ *  - status      : "answered" | "error" | "pending"
+ *  - confidence  : "high" | "medium" | "low" — from the RAG API
  */
 
 const mongoose = require("mongoose");
+
+const citationSchema = new mongoose.Schema(
+  {
+    document:   { type: String, default: "" },
+    source:     { type: String, default: "" },
+    section:    { type: String, default: "" },
+    page:       { type: Number, default: 0  },
+    chunk_id:   { type: String, default: "" },
+    title:      { type: String, default: "" },
+  },
+  { _id: false }
+);
 
 const messageSchema = new mongoose.Schema(
   {
@@ -18,25 +32,49 @@ const messageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true, // fast lookup of a user's history
+      index: true,
     },
-    content: {
+    question: {
       type: String,
-      required: [true, "Message content is required"],
+      required: [true, "Question is required"],
       trim: true,
+    },
+    answer: {
+      type: String,
+      required: [true, "Answer is required"],
+      trim: true,
+    },
+    evidence: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    citations: {
+      type: [citationSchema],
+      default: [],
     },
     status: {
       type: String,
-      required: [true, "Message status is required"],
-      trim: true,
+      required: [true, "Status is required"],
+      enum: ["pending", "answered", "error"],
+      default: "answered",
     },
-    evidenceQuality: {
+    confidence: {
       type: String,
-      required: [true, "Evidence quality is required"],
-      trim: true,
+      required: [true, "Confidence is required"],
+      enum: ["high", "medium", "low"],
+      default: "medium",
+    },
+    rag_session_id: {
+      type: String,
+      default: null,
+    },
+    chunk_id: {
+      type: String,
+      default: "",
     },
   },
-  { timestamps: true } // createdAt, updatedAt
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Message", messageSchema);

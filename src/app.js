@@ -13,13 +13,27 @@
  * Do NOT connect to the database here.
  */
 
-const express = require("express");
+const express    = require("express");
+const cors       = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const { errorHandler } = require("./middleware/errorMiddleware");
 
 const app = express();
+
+// ── CORS ───────────────────────────────────────────────────────────────────────
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",  // Vite dev server
+      "http://localhost:5174",  
+      "http://localhost:5175",  
+      "http://localhost:4173",  // Vite preview
+    ],
+    credentials: true,
+  })
+);
 
 // ── Global middleware ──────────────────────────────────────────────────────────
 app.use(express.json());
@@ -31,9 +45,9 @@ app.get("/health", (req, res) => {
 });
 
 // ── API routes ─────────────────────────────────────────────────────────────────
-app.use("/api/auth", authRoutes);
+app.use("/api/auth",  authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/chat", chatRoutes);
+app.use("/api/chat",  chatRoutes);
 
 // ── 404 handler ────────────────────────────────────────────────────────────────
 app.use((req, res) => {
